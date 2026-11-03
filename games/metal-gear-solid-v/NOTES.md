@@ -151,3 +151,27 @@ unknowns above.
 - https://mgsvmoddingwiki.github.io/IHHook
 - https://www.nexusmods.com/metalgearsolidvtpp/mods/1226
 - https://github.com/TinManTex/MockFox
+
+### 2026-11-03 Phase 0/2: triage on a real install + build of bimmylarter/dynamiteMe
+
+#### Observed
+- Steam install, english, buildid 24176213 (depot 287701 manifest 1506669297791974057), `version_info.txt`
+  `Tpp_steam_mst_en_day3900Mgo_patch_0707_1632`. `mgsvtpp.exe` SHA-256
+  `085c2f82d1c963c40b3d2d55786661dfee2b18cbbf388a710c00fa76c5e9bb45`, MD5 `bb905b1fc5bc5af60a9808b3088a1b32`,
+  PE TimeDateStamp `1783412888` = game 1.0.15.4 (June 2026 update).
+- Upstream Dynamite (master e559c3d) supports 1.0.15.3 only (exe md5 `7cc5f282...`, addresses header 1_0_15_3).
+- [bimmylarter/dynamiteMe](https://github.com/bimmylarter/dynamiteMe) (master 9b70c85, 2026-10-15) adds 1.0.15.4:
+  version picked by PE timestamp, ported address set (`tools/addressport`), installer accepts 1.0.15.4 `00.dat`
+  md5 `b28bedbc...`; plus body/carry sync work on branches. Its timestamp matches the install above.
+- [publicimagexyz/dynamite-aiassist](https://github.com/publicimagexyz/dynamite-aiassist): code audit + roadmap
+  only (game-thread violations, unchecked network handlers, one global enemy target).
+- Hook (`dinput8.dll`) builds with llvm-mingw 20261020 (clang 23, ucrt) after 3 small portability fixes
+  (detour cast to `LPVOID` in `CREATE_HOOK`, `std::from_chars` on pointers, `<csignal>`). Exports
+  `DirectInput8Create`. Not run in-game yet.
+- Go launcher could not be built in a sandbox whose network blocks `golang.org/x/*` and `modernc.org/*`.
+
+#### Playbook contradiction
+- Write-up says the rollback is mandatory. With the dynamiteMe fork it is not needed on 1.0.15.4. Update README.
+
+#### Unknown
+- Whether dynamiteMe runs on 1.0.15.4 in practice (no test run yet). QA level stays `none`.
