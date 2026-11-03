@@ -175,3 +175,11 @@ unknowns above.
 
 #### Unknown
 - Whether dynamiteMe runs on 1.0.15.4 in practice (no test run yet). QA level stays `none`.
+
+### 2026-11-03 Phase 6: first single-PC smoke run (owner launched it, no bot)
+- Setup: copy of the 1.0.15.4 install, `dynamite.exe` built from dynamiteMe 9b70c85 + llvm-mingw hook fix
+  (JustSomeSir/dynamiteme `build/llvm-mingw`), launched `mgsvtpp.exe` directly from the copy.
+- `dynamite.log.txt`: `game version 1.0.15.4`, `CreateHooks() ... done` (all hooks installed, no create-hook
+  failure), Lua hook up (`luaL_openlibsHook`), `TppMission.OnMissionStart` for mission code 1 and 40020 (ACC),
+  emblem hooks fire. No error lines. Clean exit.
+- Not tested: any 2-player session. QA level stays `none` (single-player load is not a co-op test).
