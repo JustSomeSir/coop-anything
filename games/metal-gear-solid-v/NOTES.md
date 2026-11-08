@@ -234,3 +234,25 @@ unknowns above.
 - `SyncVar` writes `array_start + i` into a game variable array whose length the hook doesn't know;
   only uint32 wrap is rejected. Needs the var's array size from `ScriptDeclVarsImpl` (not mapped).
 - Not run in game yet; behaviour with real packets needs the two-copy setup.
+
+### 2026-11-08 Phase 6: why a second copy exits, and the fix
+
+#### Observed (tools/instancediag on owner fork, branch `tools/instancediag`; 1.0.15.4)
+- Second `mgsvtpp.exe` started from PowerShell while one copy sat at the title screen:
+  `exit=0`, lived 1.9 s, no window, no Steam message. Its log:
+  `CreateMutexW name="METAL GEAR SOLID V: THE PHANTOM PAIN" lastError=183 (ALREADY_EXISTS) caller=mgsvtpp.exe`
+  at 1060 ms, then `ExitProcess code=0` 19 ms later. No `CreateProcess*` (no Steam/DRM relaunch).
+- Steam overlay mutexes/events (`SteamXInput_mutex-IPCWrapper`, `GameOverlayRender_PIDStream_*`)
+  also report ALREADY_EXISTS; they are shared by design and don't stop the game.
+- Saves: a Dynamite-installed copy uses `DYNAMITE_GAME_DATA` / `DYNAMITE_CONFIG_DATA` /
+  `DYNAMITE_PERSONAL_DATA` (moddata/standalone/TppDefine.lua); a vanilla copy uses the owner's
+  `TPP_*` files. So every test copy must have Dynamite installed, never a vanilla copy past the title.
+
+#### Fix (branch `test/second-instance`)
+- `hook/src/SecondInstance.cpp` + `InstanceName.h`: if `DYNAMITE_INSTANCE` or
+  `<game dir>/dynamite/instance.txt` gives an id, `CreateMutexW` for exactly that name becomes
+  `"... #<id>"`. No id = no hook. Host test `hook/tests/instance_name_test.cpp` passes. Not run in game yet.
+
+#### Unknown
+- What fails next for the second copy (Steam init, D3D, save access, fuse login with one SteamID).
+- Both copies share one set of DYNAMITE_* saves; concurrent writes are a risk (backups exist).
