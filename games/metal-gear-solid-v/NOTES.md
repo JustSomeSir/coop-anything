@@ -341,3 +341,19 @@ Owner fork `JustSomeSir/dynamiteme`, branch `test/qa-bridge` (on top of `test/st
   helicopter on). Title -> Continue is still a person (the runner prompts); the title script is not in
   the mod's sources.
 - QA level stays `none` until a real run prints `RESULT: PASS` with the twins failing.
+
+### 2026-11-09: title screen hang in runner-driven runs
+
+Observed (host log, run 01:02): mission 1 at 01:02:18, emblem created 01:02:41, `coopqa: pumping in mission 40010`
+at 01:02:44, first served `state` at 01:02:49, then the title menu never opened (owner: messages could be confirmed,
+spinner stayed). Runs at 00:45 and 00:53 hung the same way after the first served request at mission 1.
+Manual sessions without `coopqa.ini` opened the menu fine.
+
+Checked and ruled out: a reinstall by the runner-started `dynamite.exe -installNow` (dynamite.ini not rewritten during
+the run; Version=0 on both sides, so "already installed").
+
+Derived: the title backdrop already reports mission 40010 and heliSpace=true, so polling state() can't tell the title
+from the helicopter, and bridge requests served while the title menu loads are the likely trigger. Unknown: which call.
+
+Change: the runner sends no bridge requests until the person presses CONTINUE and then Enter in the runner console;
+master server output goes to `runs/<run>/master-server.log`. Runner simulation still ALL OK. Not yet run on the game.
