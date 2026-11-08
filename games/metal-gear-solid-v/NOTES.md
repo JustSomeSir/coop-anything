@@ -387,3 +387,14 @@ Observed: after the lua_remove fix the runner got `state` from the helicopter ("
 scripts in their own environment, so `_G.CoopQA` set inside coopqa is not the global table that loadstring chunks get.
 Fix: chunks get setfenv to a table with CoopQA that falls back to coopqa's environment; the Lua test now loads coopqa
 in a sandbox and the old version fails it (6 checks).
+
+### 2026-11-09 01:36: both copies shared one save
+
+Observed (owner): with startMission on the host, the client copy loaded straight into the mission instead of the
+helicopter. Both copies use the same Steam account, so the same `DYNAMITE_*` saves
+(`%USERPROFILE%`-independent: `<steam>\userdata\<id>\311340\remote` and `...\287700\local\*{0,1}`).
+Fix (dynamiteMe 3bd68c0): with an instance id TppDefine.lua names the saves `DYN<id>_*`; `qa/instance_saves.py`
+creates them once from the `DYNAMITE_*` ones. Saves are XOR-encoded keyed by md5(file name) (squib save.Decode), so a
+renamed save must be re-encoded; the Python codec matched the Go one byte for byte; decoded bytes 0..15 are md5 of the
+rest and are checked before writing. The runner now fails early if host and client report the same `saveFile`.
+Not yet run on the game. Open question: Steam Cloud may upload the new files in 311340\remote (unknown).
