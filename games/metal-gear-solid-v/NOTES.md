@@ -371,3 +371,11 @@ returns (no loop) on malformed input such as a locale comma.
 
 Guesses: a C++ exception thrown inside the game process does not unwind; a locale decimal comma makes the reply invalid
 JSON, which throws. Next build logs each step of the first requests ("qa trace:") and an exception self-test.
+
+### 2026-11-09 01:22: cause of the freeze found
+
+Observed: trace stopped at "call: remove". `lua_remove` has a 1.0.15.4 address in the address table and a declared
+function pointer, but `SetFuncPtrs()` never assigns it, so the bridge called a null pointer (the game's crash handler
+then hangs instead of closing). Fixed in dynamiteMe test/qa-bridge; the bridge now refuses to run if any Lua pointer it
+uses is null. The exception self-test passed on both the setup and the main thread, so exceptions are fine.
+Lesson for the playbook: an address in the table does not mean the function pointer is bound; grep the setter.
