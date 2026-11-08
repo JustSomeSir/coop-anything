@@ -379,3 +379,11 @@ function pointer, but `SetFuncPtrs()` never assigns it, so the bridge called a n
 then hangs instead of closing). Fixed in dynamiteMe test/qa-bridge; the bridge now refuses to run if any Lua pointer it
 uses is null. The exception self-test passed on both the setup and the main thread, so exceptions are fine.
 Lesson for the playbook: an address in the table does not mean the function pointer is bound; grep the setter.
+
+### 2026-11-09 01:26: first served request works; CoopQA was nil in eval
+
+Observed: after the lua_remove fix the runner got `state` from the helicopter ("host in helicopter"), then
+`eval CoopQA.startMission(...)` failed with "attempt to index global 'CoopQA' (a nil value)". Derived: MGSV runs
+scripts in their own environment, so `_G.CoopQA` set inside coopqa is not the global table that loadstring chunks get.
+Fix: chunks get setfenv to a table with CoopQA that falls back to coopqa's environment; the Lua test now loads coopqa
+in a sandbox and the old version fails it (6 checks).
