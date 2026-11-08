@@ -287,7 +287,7 @@ unknowns above.
   mock-DLL route in networking-steam-spacewar.md does not work for this game.
 - Self-test on real Steam (`steamproxy_selftest.exe --shim`): `ISteamUser::GetSteamID` returns via a
   hidden pointer after `this`; `GetAuthSessionTicket` is vtable[13] with the SteamID at +12.
-- 23:42:01 client `CreateClientSession` -> host shim delivers `P2PSessionRequest_t(7656120225523300 8)`,
+- 23:42:01 client `CreateClientSession` -> host shim delivers `P2PSessionRequest_t(76561202255233008)`,
   Dynamite: `Connection accepted` / client: `Co-op connection established`, pings both ways, both in
   mission 10020. ~60 packets/s each way, after 12 min: client sent 35922 / received 35978,
   `dropped=0 sendFailed=0 badHeader=0`.
