@@ -357,3 +357,17 @@ from the helicopter, and bridge requests served while the title menu loads are t
 
 Change: the runner sends no bridge requests until the person presses CONTINUE and then Enter in the runner console;
 master server output goes to `runs/<run>/master-server.log`. Runner simulation still ALL OK. Not yet run on the game.
+
+### 2026-11-09 01:14: freeze after the first served request, in the helicopter
+
+Observed: with the Enter gate, the owner pressed Continue, had control in the ACC (OnMissionStart 40010 at 01:14:02),
+pressed Enter; coopqa built the first state reply at 01:14:13 (Lua log), the runner never received it, and the game
+froze. The shim's periodic stats line (from RunCallbacks on the main thread) stopped after 01:14:06. So the title was
+not the cause: serving any request on the main thread hangs it, somewhere after the Lua dispatcher returns.
+
+Checked: the 1.0.15.4 addresses of lua_pushvalue (0x141a119d0), lua_remove (0x141a11c20) and luaL_checklstring
+(0x141a16f90) disassemble to the Lua 5.1 functions (Dynamite itself never calls the first two). The bridge JSON parser
+returns (no loop) on malformed input such as a locale comma.
+
+Guesses: a C++ exception thrown inside the game process does not unwind; a locale decimal comma makes the reply invalid
+JSON, which throws. Next build logs each step of the first requests ("qa trace:") and an exception self-test.
