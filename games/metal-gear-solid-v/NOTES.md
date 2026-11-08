@@ -273,3 +273,34 @@ unknowns above.
 #### Next
 - Co-op traffic between them: both run as SteamID `76561198131349084`, so Steam P2P can't connect
   them. Build the `steam_api64.dll` proxy from the plan above (localhost UDP, fake peer SteamIDs).
+
+### 2026-11-08 Phase 6: first co-op session on ONE PC, one Steam account (owner played both windows)
+
+#### Observed
+- Setup: copies 1 (host) and 2 (client) of 1.0.15.4 with Dynamite; hook from owner fork branch
+  `test/steamproxy` (per-instance mutex + loads `steamshim.dll` when `steam_proxy.ini` exists);
+  `tools/steamproxy` in hook mode; client has `fake_steam_id=76561202255233008`; one launcher
+  (master server) started BEFORE both games.
+- A replaced `steam_api64.dll` (proxy with all 747 exports forwarded, same names and ordinals) makes
+  the game show "failed to load SteamAPI" without ever calling its `SteamAPI_Init` (logged). The
+  same code as in-memory detours (MinHook on the loaded original DLL) works. Playbook gap: the
+  mock-DLL route in networking-steam-spacewar.md does not work for this game.
+- Self-test on real Steam (`steamproxy_selftest.exe --shim`): `ISteamUser::GetSteamID` returns via a
+  hidden pointer after `this`; `GetAuthSessionTicket` is vtable[13] with the SteamID at +12.
+- 23:42:01 client `CreateClientSession` -> host shim delivers `P2PSessionRequest_t(7656120225523300 8)`,
+  Dynamite: `Connection accepted` / client: `Co-op connection established`, pings both ways, both in
+  mission 10020. ~60 packets/s each way, after 12 min: client sent 35922 / received 35978,
+  `dropped=0 sendFailed=0 badHeader=0`.
+- Client `CreateClientSession` fails at once (`dynamite_connection_failed`, no P2P call) when the host
+  is not yet in the mission (23:41:05, host entered 10020 at 23:41:42). Earlier failures (23:13-23:16)
+  were with the launcher started after both games; not isolated which condition mattered.
+- The ticket patch did not run in the game (no `GetAuthSessionTicket` call logged, no
+  `CMD_AUTH_STEAMTICKET` on the master server), so it was not what fixed the connection.
+- Host log: repeated `SightManagerImplSetMarkerHook ... false, objectID 1096` errors during play.
+
+#### Owner observations (manual play, not a test)
+- Enemies and players look in sync. Desync: D-Horse and vehicles called in from Mother Base.
+
+#### Unknown
+- Why the very first connect attempt (23:38:42) closed after 10 s on both sides.
+- QA level stays `none`: no bot, no assertions yet. Next: in-game bot on this two-copy setup.
