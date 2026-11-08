@@ -256,3 +256,20 @@ unknowns above.
 #### Unknown
 - What fails next for the second copy (Steam init, D3D, save access, fuse login with one SteamID).
 - Both copies share one set of DYNAMITE_* saves; concurrent writes are a risk (backups exist).
+
+### 2026-11-08 Phase 6: two copies on one PC run (owner launched them, no bot yet)
+- Both test copies have Dynamite installed (separate `DYNAMITE_*` saves) and the hook from
+  `test/second-instance` (SHA-256 `38d4f486fc4a1fcf87ed186385d966236333db3fb8efcf94020ed52fecd5f6b9`); copy 2 has
+  `dynamite/instance.txt` = `2`; one launcher (master server) from copy 1.
+- Copy 2 log: `second instance: id 2, CreateMutexW hook MH_OK`, then
+  `game mutex renamed to instance 2, lastError=0`; game version 1.0.15.4, all hooks created.
+- Both copies reached mission 1 (title) and then 40020 (ACC) at the same time, same Steam account,
+  no errors in either log. PowerShell: copy 2 `alive=True` after 60 s. Copy 1 log shows no effect
+  from copy 2 starting.
+- So: two MGSV copies run side by side on one PC with one Steam account (RTX 5060 Ti 16 GB, 16 GB RAM).
+- Note: both copies loaded the same `DYNAMITE_GAME_DATA` (ACC). No damage seen yet; installer zip
+  backups and our own backup exist. Per-copy save names are still a TODO.
+
+#### Next
+- Co-op traffic between them: both run as SteamID `76561198131349084`, so Steam P2P can't connect
+  them. Build the `steam_api64.dll` proxy from the plan above (localhost UDP, fake peer SteamIDs).
