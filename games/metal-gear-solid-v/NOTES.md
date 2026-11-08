@@ -183,3 +183,35 @@ unknowns above.
   failure), Lua hook up (`luaL_openlibsHook`), `TppMission.OnMissionStart` for mission code 1 and 40020 (ACC),
   emblem hooks fire. No error lines. Clean exit.
 - Not tested: any 2-player session. QA level stays `none` (single-player load is not a co-op test).
+
+### 2026-11-08 Phase 6 prep: two copies on one PC (no second player available)
+
+#### Observed (static, `mgsvtpp.exe` 1.0.15.4)
+- Imports `CreateMutexW`/`ReleaseMutex` and `CreateWindowExW`/`RegisterClassExW`, no `FindWindow*`.
+  Code sections are protected (`.xtext`, `.xdata`, `.ecode`), so the mutex name can't be read
+  statically; only one useful wide string (`Tpp_main.exe`). Whether a 2nd copy starts: `unknown`,
+  needs a live run.
+- `steam_api64.dll` shipped with the game: SHA-256 `08bd0152356e5619ee56a6714ac951b6800dbb21821693a4efaf85278442c60a`,
+  FileVersion 02.77.37.82, interfaces incl. `SteamNetworking005`, `SteamUser018`, `SteamClient017`.
+- Exe imports from it only flat accessors: `SteamAPI_Init`, `SteamAPI_RunCallbacks`,
+  `SteamAPI_(Un)RegisterCallback`, `SteamAPI_(Un)RegisterCallResult`, `SteamUser`, `SteamFriends`,
+  `SteamUtils`, `SteamUserStats`, `SteamRemoteStorage`, `SteamApps`, `SteamNetworking`.
+- Dynamite rides the game's own `SteamUdpSocketImpl` (FOB netcode) and hooks its
+  `OnP2PSessionRequest`, so all co-op packets go through `ISteamNetworking005`.
+
+#### Derived: plan for a test transport
+- A proxy `steam_api64.dll` that forwards every export to the real DLL (renamed), except:
+  `SteamNetworking()` returns a wrapper whose vtable overrides `SendP2PPacket`,
+  `IsP2PPacketAvailable`, `ReadP2PPacket`, `AcceptP2PSessionWithUser`, `CloseP2PSessionWithUser`,
+  `GetP2PSessionState` and sends over localhost UDP to the other copy; `SteamAPI_RegisterCallback` is
+  watched for callback id 1202 (`P2PSessionRequest_t`) so the proxy can raise it inside
+  `SteamAPI_RunCallbacks` for the first packet from the peer; peers get fixed fake SteamIDs from an
+  env var / ini so host and client can tell each other apart while both run on one Steam account.
+- Installed only in the two test copies, never in the owner's install. Same idea as the playbook's
+  mock DLL (networking-steam-spacewar.md), but a proxy, because the game needs real Steam for
+  everything else (ownership, saves, master-server login).
+
+#### Unknown
+- Mutex: does a 2nd `mgsvtpp.exe` start while one runs? Does Steam allow it for the same app id?
+- Does the local master server (fuse) or the FOB login reject two logins from one SteamID?
+- Owner PC: RTX 5060 Ti 16 GB, 16 GB RAM. Enough for two copies at low settings: `unknown` until tried.

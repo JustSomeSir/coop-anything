@@ -9172,7 +9172,8 @@
     records are not sent to Konami's server, and copies your save so single-player data stays safe.
     Uses an IHHook base for native patches but is not Infinite-Heaven-based and conflicts with mods
     touching the same files. Latest release v0.6.0 (2025-10-31), master ahead to 2026-09. Must roll the
-    game back past the 2026-06-09 Steam patch, which breaks launch (issue 136). Mission-based from a
+    game back past the 2026-06-09 Steam patch (game 1.0.15.4), which breaks launch (issue 136), or
+    use the dynamiteMe fork. Mission-based from a
     curated list, no free roam yet, and more than 2 players fails to start. Partial sync; enemy
     positions/FOV, objectives, markers, vehicles, buddies and animations have known desyncs across 55
     open issues. GPL-3.0 with the Commons Clause. Write-up and research in games/metal-gear-solid-v.
@@ -9182,6 +9183,36 @@
   - https://github.com/unknown321/dynamite/blob/master/webui/docs/docs.md
   - https://www.pcgamer.com/games/action/after-10-years-theres-a-functioning-metal-gear-solid-5-co-op-mod-so-you-and-a-friend-can-be-played-like-a-damn-fiddle-together/
   checked: '2026-10-28'
+- game: 'Metal Gear Solid V: The Phantom Pain'
+  year: 2015
+  engine: Fox Engine
+  project: dynamiteMe
+  url: https://github.com/bimmylarter/dynamiteMe
+  other_urls:
+  - https://github.com/unknown321/dynamite
+  kind: fork
+  status: alpha
+  coop_scope:
+    players_visible: partial
+    story: partial
+    enemies: partial
+    world_state: partial
+    items: per-player
+  players: '2'
+  networking: steam-relay
+  open_source: 'yes'
+  last_activity: 2026-10
+  qa: none
+  notes: Fork of Dynamite that runs on the current Steam build, game 1.0.15.4 (June 2026), with no
+    rollback. Ports the hook's addresses to 1.0.15.4, picks them by the exe's PE timestamp and accepts
+    the 1.0.15.4 00.dat in the installer; body/carry sync work on branches. Otherwise the same mod and
+    the same known issues as Dynamite. A coop-anything agent built it and saw it load on 1.0.15.4 in a
+    single-player smoke run (2026-11-03); no two-player test yet. GPL-3.0 with the Commons Clause.
+    Write-up in games/metal-gear-solid-v.
+  sources:
+  - https://github.com/bimmylarter/dynamiteMe
+  - https://github.com/cranebeaker/coop-anything/tree/main/games/metal-gear-solid-v
+  checked: '2026-11-08'
 - game: 'Metal Gear Solid V: The Phantom Pain'
   year: 2015
   engine: Fox Engine

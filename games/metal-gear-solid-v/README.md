@@ -3,20 +3,21 @@
 | | |
 |---|---|
 | Engine | Fox Engine (Konami, closed/proprietary; Lua 5.1 scripting) |
-| Versions tested | none by us (research only); mods target the Steam release, AppID 287700 |
-| Projects | [Dynamite](https://github.com/unknown321/dynamite) (2p), [Joint Operations](https://github.com/Hound-Protocol/Joint-Operations) (planned 16p), [alex-ppg mod](https://github.com/alex-ppg/mgs-v-multiplayer-mod) (placeholder) |
-| QA level | none (no testing done by us) |
-| Last updated | 2026-10-28 |
+| Versions tested | Steam, AppID 287700, game 1.0.15.4 (buildid 24176213, exe PE timestamp 1783412888): dynamiteMe fork loads (single-PC smoke run only) |
+| Projects | [Dynamite](https://github.com/unknown321/dynamite) (2p), [dynamiteMe fork](https://github.com/bimmylarter/dynamiteMe) (2p, game 1.0.15.4), [Joint Operations](https://github.com/Hound-Protocol/Joint-Operations) (planned 16p), [alex-ppg mod](https://github.com/alex-ppg/mgs-v-multiplayer-mod) (placeholder) |
+| QA level | none (one single-player smoke run, no 2-player test) |
+| Last updated | 2026-11-08 |
 
 ## Where things stand
 
 Two players can play The Phantom Pain together today using **Dynamite**, an early but
 functioning co-op mod (PC Gamer called it "a functioning Metal Gear Solid 5 co-op mod",
 with full mission playthroughs on video). It is explicitly early-development and buggy, needs
-an unmodified Steam copy (not the Japanese version), and requires rolling the game back one
-patch before installing. There is **no playable route for 3+ players**: Joint Operations aims
-for 16 but "nothing is playable yet," and alex-ppg's repo is a one-line placeholder. We did
-research only this pass; nothing here was installed, reverse-engineered, or tested by us.
+an unmodified Steam copy (not the Japanese version). Upstream Dynamite only runs on game 1.0.15.3,
+so on the current Steam build (1.0.15.4, June 2026) you either roll the game back or use the
+**dynamiteMe** fork, which supports 1.0.15.4 (we confirmed it loads, see QA). There is **no playable route for 3+ players**: Joint Operations aims
+for 16 but "nothing is playable yet," and alex-ppg's repo is a one-line placeholder. We built
+dynamiteMe and ran it once on 1.0.15.4; no two-player session has been tested by us yet.
 
 ## Existing work
 
@@ -31,6 +32,12 @@ research only this pass; nothing here was installed, reverse-engineered, or test
   and save-safety tool ([squib](https://github.com/unknown321/squib)). Docs: `docs/MAKING_OF.md` (a
   detailed build diary) and `webui/docs/docs.md`. This is the one build players and press report
   actually playing. See NOTES.md for the full architecture + bug breakdown.
+- **[dynamiteMe](https://github.com/bimmylarter/dynamiteMe)** by bimmylarter, a Dynamite fork
+  (master 9b70c85, 2026-10-15). Ports the hook's address set to game **1.0.15.4** (`tools/addressport`),
+  picks the address set by the exe's PE timestamp, and makes the installer accept the 1.0.15.4 `00.dat`;
+  body/carry sync work sits on branches. Same license as Dynamite. The hook also builds with
+  llvm-mingw (clang) after three small portability fixes (branch `build/llvm-mingw` of the agent
+  owner's fork, to be offered upstream).
 - **[Joint Operations](https://github.com/Hound-Protocol/Joint-Operations)** by Hound Protocol,
   aims for up to 16 players (1 host + 15 clients) in the open world, Windows + Linux/Proton, using
   the game's own online functionality and the Steamworks SDK. As of 2026-10-25 it is organization,
@@ -73,18 +80,22 @@ research only this pass; nothing here was installed, reverse-engineered, or test
 
 ## What we changed
 
-Nothing. This pass is research and directory/write-up only.
+- Built dynamiteMe from source: hook with llvm-mingw 20261020 (3 portability fixes, no logic
+  change), Go launcher on Windows. Nothing else changed yet.
 
 ## QA
 
-No tests were run by us. QA level: `none`. Reported play (Dynamite) is from the author's gameplay
-videos and press coverage, not structured testing.
+QA level: `none`. One check ran, 2026-11-03: a single-player smoke run of dynamiteMe on a copy of a
+1.0.15.4 Steam install. The hook log shows `game version 1.0.15.4`, all hooks created, the Lua hook up
+and missions 1 and 40020 (ACC) starting, with no error lines. No two-player session was tested.
+Reported play (Dynamite) is from the author's gameplay videos and press coverage, not structured testing.
 
 ## How to play
 
 For 2 players today: install **Dynamite** per its own documentation
-(https://github.com/unknown321/dynamite), unmodified Steam copy (not JP), roll the game back one
-patch first (issue #136), then follow the shipped user docs. Players run these steps on their own
+(https://github.com/unknown321/dynamite), unmodified Steam copy (not JP), on the current
+1.0.15.4 build either use the dynamiteMe fork or roll the game back to 1.0.15.3 (issue #136), then
+follow the shipped user docs. Players run these steps on their own
 machine; coop-anything does not distribute the game or the mod.
 
 ## Known issues
@@ -104,8 +115,8 @@ What a player will actually notice in Dynamite (categorised from its 55 open iss
 - **Buddies:** Quiet/D-Dog are local (not seen by the partner); D-Horse causes teleport desync.
 - **Flow:** death → respawn after ~10 s (no mission-fail); restarting from the pause menu hangs on an
   infinite loading screen; fultoning another player fails the mission.
-- **Setup:** requires a game-version rollback (undone whenever Steam updates the game); JP version
-  unsupported; co-op won't connect during Steam weekly maintenance.
+- **Setup:** upstream needs a game-version rollback to 1.0.15.3 (undone whenever Steam updates the
+  game), the dynamiteMe fork does not; JP version unsupported; co-op won't connect during Steam weekly maintenance.
 
 ## Next steps
 
@@ -114,10 +125,12 @@ Networking, supported version, and what-syncs are now mapped (see above and NOTE
 - **Highest-value fixes by the author's own priority:** `>2 player` support (session fails to start)
   and **enemy position/FOV sync** (#112, #113), the two that most change the "is this really co-op"
   feeling. The marker channel already shows a working custom-sync path to copy.
-- Build from source (`docs/BUILD.md`, Go) and set up **isolated test installs + bot-driven QA**
+- Set up **two game copies on one PC + bot-driven QA**: a `steam_api64.dll` proxy that carries the
+  game's `ISteamNetworking005` P2P traffic over localhost UDP (plan in NOTES.md)
   (`playbook/automated-qa.md`, `tools/`) so fixes are verified without a human playtest.
 - Diff vanilla vs. Dynamite scripts with the author's own method (unpack game, StyLua-format, `meld`)
   to see exactly where each patch lives before changing it.
-- Confirm the exact pre-2026-06-09 build number to roll back to (issue #136 only gives the date).
+- Confirm the exact pre-2026-06-09 build number to roll back to, for upstream users (issue #136 only
+  gives the date).
 - Watch Joint Operations' 0.1 (2-player) build and update the directory when it ships.
 
