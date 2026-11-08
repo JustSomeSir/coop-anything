@@ -215,3 +215,22 @@ unknowns above.
 - Mutex: does a 2nd `mgsvtpp.exe` start while one runs? Does Steam allow it for the same app id?
 - Does the local master server (fuse) or the FOB login reject two logins from one SteamID?
 - Owner PC: RTX 5060 Ti 16 GB, 16 GB RAM. Enough for two copies at low settings: `unknown` until tried.
+
+### 2026-11-08 Phase 5: packet validation in the hook (no second player needed)
+
+#### Observed
+- `DynamiteSyncImpl::RecvRaw` already runs `flatbuffers::Verifier` (so the aiassist audit's
+  "unchecked network handlers" is only partly true), but the Verifier passes missing union bodies,
+  null strings/structs/vectors, short vectors and unknown union types. Handlers dereference those
+  (`m->category()->c_str()`, `m->pos()->x()`) and `memcpy` 176-byte BossQuiet structs out of the
+  vectors (`HandleSendBossQuiet*`), i.e. a short packet reads out of bounds.
+- Fix on owner fork branch `fix/validate-packets`: `hook/src/DynamiteSyncImpl/MessageValidation.h`
+  (game-free checks per message type), called in `RecvRaw` before `packet_num` is advanced; also
+  rejects packets shorter than the 8-byte header and verifies only the received bytes.
+- `hook/tests/run_tests.sh` (host g++, ASan/UBSan): 34 cases pass; the Verifier alone passes 19 of
+  19 malformed cases; 5 of 5 validator mutants are killed. Hook builds with llvm-mingw.
+
+#### Unknown
+- `SyncVar` writes `array_start + i` into a game variable array whose length the hook doesn't know;
+  only uint32 wrap is rejected. Needs the var's array size from `ScriptDeclVarsImpl` (not mapped).
+- Not run in game yet; behaviour with real packets needs the two-copy setup.
