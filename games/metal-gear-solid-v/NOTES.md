@@ -304,3 +304,40 @@ unknowns above.
 #### Unknown
 - Why the very first connect attempt (23:38:42) closed after 10 s on both sides.
 - QA level stays `none`: no bot, no assertions yet. Next: in-game bot on this two-copy setup.
+
+### 2026-11-09 Phase 6: QA harness (built and tested without the game; first real run pending)
+
+Owner fork `JustSomeSir/dynamiteme`, branch `test/qa-bridge` (on top of `test/steamproxy`), `qa/README.md`.
+
+#### Built
+- coop-anything `tools/bridge` server embedded in the Dynamite hook (`hook/src/QABridge*.{h,cpp}`),
+  started only when `coopqa.ini` sits next to `mgsvtpp.exe`; endpoint in `dynamite/qa-endpoint.json`.
+- Main-thread pump without new game addresses: Dynamite's `script_loader.Update` (in TppMain's
+  per-frame list) requires `lua/coopqa.lua` when `coopqa.ini` exists; its `Update` calls
+  `Dynamite.QAPump(dispatch)`. Requests run as Lua via `dispatch(kind, arg)`; the C++ side uses only
+  Lua C functions that have 1.0.15.4 addresses (`pushvalue`, `pushstring`, `pcall`, `checklstring`,
+  `remove`) and leaves the stack balanced. `lua_settop`/`luaL_loadbuffer`/`lua_type` have no
+  1.0.15.4 address in the hook, which is why Lua does the loading and JSON encoding.
+- Mission start from the helicopter: `TppMission.ReserveMissionClear{missionClearType =
+  FROM_HELISPACE, nextMissionId, nextClusterId}`, the call `TppMission.OnEndMissionPreparation`
+  makes after the deploy menu (moddata/standalone/TppMission.lua).
+- Runner `qa/run_qa.py` (Python 3.8+, stdlib, vendored `bridge_client.py`): master server
+  (`dynamite.exe -installNow`, no web UI), host to mission, waits for `host session res: 1` in the
+  host log, client `CreateClientSession` with 3 tries until `Co-op connection established`, client to
+  the same mission. Tests: `connect`, `positions`, `stability` (soak). Twins: client never connects;
+  swapped player indices.
+
+#### Observed (host tests, Linux)
+- `qa/tests/test_qabridge.py`: real bridge server + real Lua 5.1 + `coopqa.lua` with stubs, driven by
+  `bridge_client.py`: 16/16 checks pass; twins "stack not restored" and "Lua error reported as success"
+  both caught.
+- `qa/tests/test_runner_sim.py`: the runner against two simulated games: good -> PASS (twins fail as
+  they must); desync, no connect, client crash -> FAIL. Found and fixed: processes leaked when the
+  bring-up failed; the log tail could read the previous run's lines; a crash after the asserts
+  passed (hence the soak test).
+
+#### Unknown
+- Whether `script_loader.Update` runs on the title screen (if not, the bridge answers only from the
+  helicopter on). Title -> Continue is still a person (the runner prompts); the title script is not in
+  the mod's sources.
+- QA level stays `none` until a real run prints `RESULT: PASS` with the twins failing.
