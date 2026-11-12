@@ -549,3 +549,20 @@ second locator "BuddyHorseGameObjectLocator0001" at (858, 330.5, 1690), compiled
 XML is identical) and put into buddy_horse2_00.fpkd through the installer's ReplaceInFPK. horse_scan also scans
 around that point. Question it answers: does the engine accept and show a second TppHorse2?
 Unknown: whether the owner's D-Horse uses the _00 pack (others: _02_0.._05). Not yet run on the game.
+
+### 2026-11-12 21:19: two-instance D-Horse data on the game
+
+Observed: install log shows buddy_horse2_00.fox2 replaced in buddy_horse2_00.fpkd (source chunk1.dat) on both copies.
+The mission loads, D-Horse can be called on both sides, no crash, with totalCount/realizedCount 2 and a second
+locator. Owner (watching both windows): each player still sees only their own horse; the client mounted his horse
+and on the host's screen he teleported onto the host's horse. Data: client `vars.playerVehicleGameObjectId` 6656 at
+the end; scans around the second locator point (858, 330.5, 1690) never show those exact coordinates; clusters
+within 5 m of it exist on the host (e.g. 858.744, 330.604, 1685.578, 8 paths, unchanged over all scans) but there
+is no baseline to tell what they are (the object does not exist before the first call). Scans hit the 20000-node
+and 200-hit limits, so they are not exhaustive.
+Derived: the engine tolerates the larger count; nothing shows that instance 1 is ever activated. The buddy controller
+(CallBuddy etc.) only ever addresses instance 0.
+Unknown: whether the modified fox2 is the one in use (other packs _02_0.._05), whether instance 1 exists in memory.
+Assessment: making instance 1 appear and follow the partner needs native calls into TppHorse2 (activate/warp an
+instance, set its transform every frame, remap the partner's ride id); none of these addresses are known. That is
+reverse engineering of the exe, not data or Lua work.
