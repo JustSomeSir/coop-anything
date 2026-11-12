@@ -535,3 +535,17 @@ Plan for "one horse per player, both visible": (1) game data with two TppHorse2 
 puppet on index 1, driven by a new sync message with position and rotation; (3) map the partner's ride id 6656 to
 6657 locally. First the data: `tools/gamefiles` (Go, uses the mod's datfpk) copies buddy_horse2_common.fpk(d) out
 of the test copy's archives and turns fox2 into XML; `qa/extract_gamefiles.ps1` runs it. Not yet run on the game.
+
+### 2026-11-12 21:13: D-Horse game object definition; two-instance experiment prepared
+
+Observed (owner ran qa/extract_gamefiles.ps1 on the test copy): master\chunk1.dat holds
+/Assets/tpp/pack/buddy/horse/buddy_horse2_common.fpk(d) and buddy_horse2_00.fpkd; the latter contains
+/Assets/tpp/level_asset/chara/buddy/horse/buddy_horse2_00.fox2 with: DataSet, one GameObjectLocator
+"BuddyHorseGameObjectLocator" (typeName TppHorse2, TransformEntity at 0,0,0, TppHorse2LocatorParameter), GameObject
+"BuddyHorseGameObject" (typeName TppHorse2, totalCount 1, realizedCount 1, TppHorse2Parameter with the parts file),
+a TexturePackLoadConditioner. (Structure only; the file itself stays on the owner's PC.)
+Experiment (dynamiteMe branch exp/two-horses, d42f836): the same fox2 with totalCount 2, realizedCount 2 and a
+second locator "BuddyHorseGameObjectLocator0001" at (858, 330.5, 1690), compiled with datfpk (round trip back to
+XML is identical) and put into buddy_horse2_00.fpkd through the installer's ReplaceInFPK. horse_scan also scans
+around that point. Question it answers: does the engine accept and show a second TppHorse2?
+Unknown: whether the owner's D-Horse uses the _00 pack (others: _02_0.._05). Not yet run on the game.
