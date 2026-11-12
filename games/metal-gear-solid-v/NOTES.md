@@ -515,3 +515,23 @@ Next for D-Horse: Lua gives no horse position, so the hook got a test-only memor
 Dynamite.QAScan / QAVec): from FindGameObjectWithID(id), follow pointers up to N hops and report float triples near
 a given point; host-tested with ASan and 2 mutants. `experiment.py horse_scan` calls D-Horse to a known point on each
 side and scans ids 6656/6657 on both sides before and after. Not yet run on the game.
+
+### 2026-11-12 21:00: D-Horse scan (mission 10036): each side has only its own horse
+
+Observed (runs/20261112-210019-horse_scan/experiment.jsonl, hook 7f10858-dirty):
+- Before any call FindGameObjectWithID(6656) is null on both sides, `vars.buddyType` 0, active buddy 0.
+- After the HOST called D-Horse to A = (869.645, 329.894, 1690.138): on the host the object exists and a vec3
+  (869.645, 328.146, 1690.888) is reachable at path `58>10@1f0` (and further copies; 200+ hits within 5 m), stable
+  over three scans; active buddy 1. On the CLIENT FindGameObjectWithID(6656) is still null in all three scans
+  (21:03:35-21:03:56) and its active buddy is 0.
+- After the CLIENT called D-Horse to B = (857.645, 329.894, 1678.138): the client has a vec3 (857.645, 329.862,
+  1678.888) at path `58>20@1f0`; the host has nothing at B (only unrelated hits 4-6 m away) and still has its own
+  at A. FindGameObjectWithID(6657) returns the same root as 6656.
+Derived: D-Horse is local to each game; nothing about it is sent. Both use object id 6656, so "player rides 6656"
+from the partner lands on the local horse (the owner's "client's horse appeared under the host").
+The scan path differs between the two processes (`58>10` vs `58>20`), so it is not a fixed layout: the second hop
+looks like a slot in a table at root+0x58. Unknown: which slot rule; rotation; what else is in the entry.
+Plan for "one horse per player, both visible": (1) game data with two TppHorse2 instances; (2) partner's horse as a
+puppet on index 1, driven by a new sync message with position and rotation; (3) map the partner's ride id 6656 to
+6657 locally. First the data: `tools/gamefiles` (Go, uses the mod's datfpk) copies buddy_horse2_common.fpk(d) out
+of the test copy's archives and turns fox2 into XML; `qa/extract_gamefiles.ps1` runs it. Not yet run on the game.
