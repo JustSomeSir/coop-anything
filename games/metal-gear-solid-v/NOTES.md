@@ -407,3 +407,10 @@ did not connect); connect PASS (2 members and sessionConnect on both sides); pos
 between the two views, tolerance 2.0 m); positions oracle twin failed as it must (150.13 m); stability PASS
 (59 samples over 60 s, both alive, 2 members throughout). The session twin (client does not connect) had started and
 was waiting for the owner at the title; its result is not known yet. Title CONTINUE is still pressed by a person.
+
+### 2026-11-12 19:28: session twin result
+
+Observed (runner output from the owner): twin "client does not call CreateClientSession": both sides report 1 member,
+connect failed as it must. Final table: connect ok, positions ok, positions twin ok, stability ok, connect twin ok,
+RESULT: PASS. Write-up QA section updated with the summary and its limits; directory qa level left at `none` until
+the owner decides (the run used a fork branch and a loopback transport, not the listed project's release).

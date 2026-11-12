@@ -90,6 +90,23 @@ QA level: `none`. One check ran, 2026-11-03: a single-player smoke run of dynami
 and missions 1 and 40020 (ACC) starting, with no error lines. No two-player session was tested.
 Reported play (Dynamite) is from the author's gameplay videos and press coverage, not structured testing.
 
+**Automated run, 2026-11-12** (not yet reflected in the directory QA level, see the limits below). Fork branch
+`JustSomeSir/dynamiteMe` `test/qa-bridge` (hook b843d74 plus local changes), game 1.0.15.4 Steam, two copies of the
+game on one PC, mission 10020, runner `qa/run_qa.py --twins`:
+
+```
+connect    test  ok     host and client both report 2 members and a connected session
+positions  test  ok     each player is 0.01 m apart between the host's and the client's view (tolerance 2.0 m)
+positions  twin  ok     compared with swapped players: 150.13 m, failed as it must
+stability  test  ok     59 samples over 60 s, both games alive, 2 members throughout
+connect    twin  ok     client does not connect: both sides report 1 member, connect failed as it must
+RESULT: PASS
+```
+
+Limits: the two copies talk over a test-only UDP loopback shim instead of the Steam relay (one Steam account cannot
+join itself); a person presses CONTINUE on the title screen of each copy; one mission, three tests, no lag or loss
+runs, no vehicles or D-Horse (known desync, seen by hand). The client needed three connect attempts in that run.
+
 ## How to play
 
 For 2 players today: install **Dynamite** per its own documentation
