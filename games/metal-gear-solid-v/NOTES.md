@@ -441,3 +441,20 @@ Unknown: which steps needed a key press from the owner (popups in mission 1, pre
 Change: runner default `title_wait: auto`: waits for Seq_Game_TitleMenu, calls CoopQA.pressContinue() (the menu's own
 OnSelectContinue), ready = heliSpace and Seq_Game_MainGame and not title mode and not notInGame. Simulation covers a
 title that ignores CONTINUE (must fail). Not yet run on the game.
+
+### 2026-11-12 19:50: first run with the runner pressing CONTINUE
+
+Observed (runner output from the owner): `CoopQA.pressContinue()` returned ok and one second later the host was in
+Seq_Game_MainGame: calling the menu's OnSelectContinue works. Two steps waited for the owner's key press:
+1/Seq_Demo_LogInKonamiServer (38 s, 15 s on the client) and 40010/Seq_Demo_StartHasTitleMission (48 s, 39 s).
+Master server log: CMD_GET_URLLIST/SVRLIST/SVRTIME arrive at the start of the login step, CMD_SEND_BOOT only after the
+key press, so the wait is on the game side. On the client CONTINUE went 40010/Seq_Game_ChunkInstalled -> mission 10020
+(Seq_Demo_ArrivalInAfghanistan ...): its DYN2 save had been left inside the mission by the earlier test runs.
+Also found: `string.format("%d")` in the game's Lua is 32-bit, so the bridge JSON gave wrong values for integers
+>= 2^31 (the probe's names.json lost every StrCode32 hash above 2^31; 160 of 328 names survived).
+
+Changes (not yet run on the game): pressContinue picks the menu's OnSelectRestartHeli when
+`gvars.title_nextMissionCode` is not a helicopter mission; the two key-wait steps get Enter via SendInput into the game
+window, only when it is the foreground window (qa/winkeys.py, untested: no Windows here); the runner fails if the title
+ends in a non-helicopter mission; integers are encoded with %.0f. Guess: Enter is the key those steps accept.
+Unknown: what the two screens show. Dynamite upstream reports v0.6.0 available (launcher log); not looked at yet.
