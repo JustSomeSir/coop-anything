@@ -398,3 +398,12 @@ creates them once from the `DYNAMITE_*` ones. Saves are XOR-encoded keyed by md5
 renamed save must be re-encoded; the Python codec matched the Go one byte for byte; decoded bytes 0..15 are md5 of the
 rest and are checked before writing. The runner now fails early if host and client report the same `saveFile`.
 Not yet run on the game. Open question: Steam Cloud may upload the new files in 311340\remote (unknown).
+
+### 2026-11-12 19:19: first passing automated run on the game (main session)
+
+Observed (runner output pasted by the owner, hook b843d74-dirty, two copies on one PC, mission 10020):
+save files host DYNAMITE_GAME_DATA / client DYN2_GAME_DATA; client connected on attempt 3 (two attempts 5 s apart
+did not connect); connect PASS (2 members and sessionConnect on both sides); positions PASS (both players 0.01 m apart
+between the two views, tolerance 2.0 m); positions oracle twin failed as it must (150.13 m); stability PASS
+(59 samples over 60 s, both alive, 2 members throughout). The session twin (client does not connect) had started and
+was waiting for the owner at the title; its result is not known yet. Title CONTINUE is still pressed by a person.
