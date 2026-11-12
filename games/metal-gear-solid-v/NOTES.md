@@ -468,3 +468,14 @@ OnSelectRestartHeli on both (title_nextMissionCode 10020) and each copy was in S
 save files differ; client connected on attempt 1; connect, positions (0.01 m), stability (59 samples / 60 s) PASS.
 Whole run 20:07:45 - 20:11:33. So Enter is accepted by both key-wait steps, and SetForegroundWindow worked for both
 windows on the owner's Windows.
+
+### 2026-11-12 20:20: D-Horse desync, start
+
+Observed by the owner (manual session, 2026-11-09): both players called D-Horse; each mostly saw only their own; at one
+point the client's horse appeared under the host, "almost in sync". A vehicle called by the host was invisible to the
+client (the host was seen getting into nothing). Wanted: each player has their own horse, visible to the other.
+Sources: Dynamite docs/MAKING_OF.md (Vehicles, Buddies) says the same and has no fix; upstream master (2026-09-29)
+has no commit about vehicles or the horse beyond logging. The hook has no horse-specific code (grep).
+Plan: measure first. `qa/experiment.py horse_probe` brings up the usual session, lists the buddy/GameObject Lua API
+on both sides, calls D-Horse on the host, then on the client (TppBuddy2BlockController.CallBuddy: a guess from other
+mods), and samples TppHorse2 positions and both player positions on both sides. Not yet run on the game.
