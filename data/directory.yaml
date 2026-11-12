@@ -9232,13 +9232,14 @@
   notes: Fork of Dynamite that runs on the current Steam build, game 1.0.15.4 (June 2026), with no
     rollback. Ports the hook's addresses to 1.0.15.4, picks them by the exe's PE timestamp and accepts
     the 1.0.15.4 00.dat in the installer; body/carry sync work on branches. Otherwise the same mod and
-    the same known issues as Dynamite. A coop-anything agent built it and saw it load on 1.0.15.4 in a
-    single-player smoke run (2026-11-03); no two-player test yet. GPL-3.0 with the Commons Clause.
-    Write-up in games/metal-gear-solid-v.
+    the same known issues as Dynamite. A coop-anything agent built it and saw it load on 1.0.15.4
+    (2026-11-03); a fork branch of it passes a small scripted two-copy suite on one PC over a loopback
+    transport (2026-11-12, limits in the write-up), which is why qa stays none here. D-Horse and vehicles
+    are not synced. GPL-3.0 with the Commons Clause. Write-up in games/metal-gear-solid-v.
   sources:
   - https://github.com/bimmylarter/dynamiteMe
   - https://github.com/cranebeaker/coop-anything/tree/main/games/metal-gear-solid-v
-  checked: '2026-11-08'
+  checked: '2026-11-12'
 - game: 'Metal Gear Solid V: The Phantom Pain'
   year: 2015
   engine: Fox Engine

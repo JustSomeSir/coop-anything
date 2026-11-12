@@ -197,3 +197,41 @@ error when the count is 0, and give every patch at least one test that fails wit
 (`Plugin.cs` in superflight-coop, `games/superflight/NOTES.md`).
 
 89. **Battle bots need real player stats, and a person watching catches what asserts miss.** BLACK SOULS II: a bot that skipped the intro played the placeholder actor (about 27 times normal HP and attack), so every fight one-shot, enemy hits showed "not affected", and a battle suite "passed" without exercising multi-turn sync. A tester watching the visible test windows spotted it, and also noticed that auto-battling bots never open the command menu. Load the real starting characters at a realistic level (read the class curves and the damage formula from the data), keep bot runs visible when someone wants to watch, and add one scenario that uses the real input menus instead of auto-battle.
+
+91. **A replaced `steam_api64.dll` can be refused before `SteamAPI_Init`; detour the real one in memory instead.**
+MGSV 1.0.15.4 showed "failed to load SteamAPI" with a forwarding proxy DLL in place and never called its
+`SteamAPI_Init`. Loading a small DLL from the mod's hook that detours `SteamNetworking()`/`SteamUser()`/
+`SteamAPI_RunCallbacks` in the untouched Steam DLL worked: two copies under one account formed a session over
+localhost UDP. Example: MGSV (`tools/steamproxy` in JustSomeSir/dynamiteMe, `games/metal-gear-solid-v/NOTES.md`).
+
+92. **An address in the mod's table does not mean the function pointer is set.** Dynamite's 1.0.15.4 table had an
+address for `lua_remove` and a declared pointer, but the setter never assigned it because the mod never called it.
+The test bridge did, on the first served request, and the game froze (its crash handler hangs instead of closing),
+which looked like "the title screen hangs when polled" for four runs. Before using a function the mod has not used,
+grep the setter, and check every pointer you call for null once at start-up with a log line. Example: MGSV (NOTES.md,
+2026-11-09).
+
+93. **Two copies under one account share the save unless you separate it.** The MGSV client loaded the host's
+mid-mission save, and each run left the saves inside a mission. Give each instance its own save names and check them
+in the runner before any test ("host and client report different save files"). MGSV saves are XOR-encoded with a
+stream keyed by md5(file name), so a renamed save must be re-encoded for its new name. Example: MGSV
+(`qa/instance_saves.py`).
+
+94. **To get past a title screen, call the menu's own handler, and tell the title from the game by the game's
+flags.** MGSV's title runs over the loaded mission, so mission code and "in helicopter" are already true on the
+title. The current sequence name and `gvars.ini_isTitleMode` tell them apart, and `Seq_Game_TitleMenu` exposes
+`OnSelectContinue`/`OnSelectRestartHeli`, which do what the menu items do (use the second when the save sits
+inside a mission). Record the sequence names and handlers once while a person clicks through. Steps with no handler
+(a login notice, "press any key") got Enter by `SendInput`, only while the game window is the foreground window.
+Example: MGSV (`qa/probe_title.py`, `wait_title` in `qa/run_qa.py`).
+
+95. **When the game gives scripts no position for an object, find it in memory from a known point.** Put the object
+somewhere you choose (MGSV: call D-Horse to a point), then walk pointers a few hops from the object and report float
+triples near that point; the path can be read again later. It showed in one run that the horse exists only on the
+side that called it. The paths differ between processes, so re-scan instead of hard-coding them. Example: MGSV
+(`hook/src/MemScanCore.h`, tested off-game with ASan and mutants).
+
+96. **Check integer formatting in the game's script runtime before trusting ids and hashes.** In MGSV's Lua
+`string.format("%d", n)` is 32-bit: every hash above 2^31 came out wrong in the bridge's JSON and 168 of 328 names
+in a lookup table were lost without an error. Format integers with `%.0f` and test one value above 2^31.
+Example: MGSV (`qa/lua/coopqa.lua`).

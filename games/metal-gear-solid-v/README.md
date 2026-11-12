@@ -81,14 +81,31 @@ dynamiteMe and ran it once on 1.0.15.4; no two-player session has been tested by
 ## What we changed
 
 - Built dynamiteMe from source: hook with llvm-mingw 20261020 (3 portability fixes, no logic
-  change), Go launcher on Windows. Nothing else changed yet.
+  change), Go launcher on Windows.
+- Work branches in https://github.com/JustSomeSir/dynamiteMe (not merged anywhere yet):
+  `fix/validate-packets` (reject malformed sync packets before a handler reads them; host tests with ASan and
+  mutants), `test/qa-bridge` (everything below), `exp/two-horses` (the two-instance D-Horse data experiment).
+- Test-only pieces, all switched on by files that exist only in the test copies: a per-instance name for the
+  game's single-instance mutex (`dynamite/instance.txt`); `steamshim.dll`, which detours the game's
+  `ISteamNetworking005` P2P calls to UDP on localhost so two copies under one Steam account can form a session;
+  separate save names per instance (`DYN<id>_*`, re-keyed copies made by `qa/instance_saves.py`); the coop-anything
+  bridge server inside the hook, pumped from Lua (`coopqa.lua`); `Dynamite.QAScan`/`QAVec`, a memory probe that
+  finds where an object keeps its position by following pointers from `FindGameObjectWithID` and matching a float
+  triple near a known point (the game gives Lua no position for the horse or vehicles).
+- One real bug fixed on the way: `lua_remove` had a 1.0.15.4 address but was never assigned in `SetFuncPtrs`
+  (nothing in the mod called it until the bridge did).
 
 ## QA
 
 QA level: `none`. One check ran, 2026-11-03: a single-player smoke run of dynamiteMe on a copy of a
 1.0.15.4 Steam install. The hook log shows `game version 1.0.15.4`, all hooks created, the Lua hook up
-and missions 1 and 40020 (ACC) starting, with no error lines. No two-player session was tested.
+and missions 1 and 40020 (ACC) starting, with no error lines.
 Reported play (Dynamite) is from the author's gameplay videos and press coverage, not structured testing.
+The directory level stays `none` for the listed projects: the runs below used a fork branch and a loopback transport,
+not a release of either project.
+
+**By hand, 2026-11-09:** the owner played a two-copy session on one PC (12 minutes, 0 dropped packets in the shim's
+counters): enemies and players in sync by eye; D-Horse and a called vehicle out of sync (Known issues).
 
 **Automated run, 2026-11-12** (not yet reflected in the directory QA level, see the limits below). Fork branch
 `JustSomeSir/dynamiteMe` `test/qa-bridge` (hook b843d74 plus local changes), game 1.0.15.4 Steam, two copies of the
@@ -111,6 +128,8 @@ Since 2026-11-12 20:07 the same suite runs with nobody at the keyboard (about 4 
 the game window for the two title steps that wait for a key, then calls the title menu's own handler
 (`OnSelectContinue`, or `OnSelectRestartHeli` when the save is inside a mission). That run: connect, positions,
 stability ok, RESULT: PASS, client connected on the first attempt.
+The default test mission is now 10036 (no tutorial or scripted ride; ground start without a helicopter route):
+same three tests ok on 2026-11-12 20:46, both players about 1 m apart at the start.
 
 ## How to play
 
@@ -135,6 +154,12 @@ What a player will actually notice in Dynamite (categorised from its 55 open iss
 - **Vehicles:** tanks/cars have spawn and position-sync bugs (host picking a tank can crash the game);
   Walker Gear is invisible to the other player.
 - **Buddies:** Quiet/D-Dog are local (not seen by the partner); D-Horse causes teleport desync.
+  Measured 2026-11-12 (1.0.15.4, dynamiteMe, mission 10036, `qa/experiments/horse_scan.py`): D-Horse is local to
+  each game. After the host calls it, the host has a `TppHorse2` object at the call point and the client has no
+  such object at all; after the client calls it, the client has its own and the host has nothing there. Both are
+  object id 6656, so "partner rides 6656" puts the partner on your own horse (the teleport). The game data declares
+  one instance (`GameObject` `totalCount` 1 in `buddy_horse2_00.fox2`); raising it to 2 with a second locator loads
+  without a crash but shows no second horse. Not fixed: see Next steps.
 - **Flow:** death → respawn after ~10 s (no mission-fail); restarting from the pause menu hangs on an
   infinite loading screen; fultoning another player fails the mission.
 - **Setup:** upstream needs a game-version rollback to 1.0.15.3 (undone whenever Steam updates the
@@ -147,9 +172,15 @@ Networking, supported version, and what-syncs are now mapped (see above and NOTE
 - **Highest-value fixes by the author's own priority:** `>2 player` support (session fails to start)
   and **enemy position/FOV sync** (#112, #113), the two that most change the "is this really co-op"
   feeling. The marker channel already shows a working custom-sync path to copy.
-- Set up **two game copies on one PC + bot-driven QA**: a `steam_api64.dll` proxy that carries the
-  game's `ISteamNetworking005` P2P traffic over localhost UDP (plan in NOTES.md)
-  (`playbook/automated-qa.md`, `tools/`) so fixes are verified without a human playtest.
+- Done: two game copies on one PC + bot-driven QA (see QA). Open there: the client sometimes needs two or three
+  connect attempts 5 s apart; no lag/loss runs; only mission 10036 (and 10020) tried.
+- **D-Horse, one per player (parked 2026-11-12, owner's call).** What is known is under Known issues and in
+  NOTES.md. What is missing is native: activate a second `TppHorse2` instance, set its transform from a new sync
+  message, and map the partner's ride id 6656 to the second instance. None of these addresses are known; it is
+  reverse engineering of the exe. A smaller goal with the same kind of work: keep a riding partner at their own
+  position instead of snapping them onto the local horse.
+- **Vehicles:** a vehicle called by the host is invisible to the client (owner, by eye, 2026-11-09). Not measured yet;
+  `Dynamite.QAScan` (below) can locate its position the same way as the horse's.
 - Diff vanilla vs. Dynamite scripts with the author's own method (unpack game, StyLua-format, `meld`)
   to see exactly where each patch lives before changing it.
 - Confirm the exact pre-2026-06-09 build number to roll back to, for upstream users (issue #136 only
