@@ -503,3 +503,15 @@ first try a ground start without a route), and read the horse position natively 
 the hook only knows the soldier position table).
 Mod data note: moddata/coop_essentials ships fox2 XML (two_player2_instances.fox2.xml) compiled by the installer with
 unknown321/datfpk, so a fox2 that declares two TppHorse2 instances is a possible route to "one horse per player".
+
+### 2026-11-12 20:46: mission 10036 as the test mission
+
+Observed (runner output from the owner, `run_qa.py --mission 10036`, no route = ground start): host and client both
+load 10036 from the ACC, stand about 1 m apart (863.6, 329.9, 1684.1 / 863.1, 329.9, 1684.9), connect (3rd attempt),
+positions 0.01 m, stability 59 samples / 60 s, RESULT: PASS. Owner: no visual glitches. No tutorial or scripted ride.
+qa_config default mission is now 10036.
+
+Next for D-Horse: Lua gives no horse position, so the hook got a test-only memory probe (hook/src/MemScanCore.h,
+Dynamite.QAScan / QAVec): from FindGameObjectWithID(id), follow pointers up to N hops and report float triples near
+a given point; host-tested with ASan and 2 mutants. `experiment.py horse_scan` calls D-Horse to a known point on each
+side and scans ids 6656/6657 on both sides before and after. Not yet run on the game.
