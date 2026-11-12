@@ -104,8 +104,13 @@ RESULT: PASS
 ```
 
 Limits: the two copies talk over a test-only UDP loopback shim instead of the Steam relay (one Steam account cannot
-join itself); a person presses CONTINUE on the title screen of each copy; one mission, three tests, no lag or loss
+join itself); one mission, three tests, no lag or loss
 runs, no vehicles or D-Horse (known desync, seen by hand). The client needed three connect attempts in that run.
+
+Since 2026-11-12 20:07 the same suite runs with nobody at the keyboard (about 4 minutes): the runner types Enter into
+the game window for the two title steps that wait for a key, then calls the title menu's own handler
+(`OnSelectContinue`, or `OnSelectRestartHeli` when the save is inside a mission). That run: connect, positions,
+stability ok, RESULT: PASS, client connected on the first attempt.
 
 ## How to play
 

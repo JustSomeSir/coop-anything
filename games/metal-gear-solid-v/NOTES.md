@@ -458,3 +458,13 @@ Changes (not yet run on the game): pressContinue picks the menu's OnSelectRestar
 window, only when it is the foreground window (qa/winkeys.py, untested: no Windows here); the runner fails if the title
 ends in a non-helicopter mission; integers are encoded with %.0f. Guess: Enter is the key those steps accept.
 Unknown: what the two screens show. Dynamite upstream reports v0.6.0 available (launcher log); not looked at yet.
+
+### 2026-11-12 20:07: first unattended run
+
+Observed (runner output from the owner, nobody touched the games): Enter via SendInput ended
+Seq_Demo_LogInKonamiServer (pressed 8 s into the step, next step 1 s later; Seq_Demo_ShowDlcAnnouncePopup was not seen
+at 1 s polling) and Seq_Demo_StartHasTitleMission (pressed at 12 s) on both copies; pressContinue chose
+OnSelectRestartHeli on both (title_nextMissionCode 10020) and each copy was in Seq_Game_MainGame one second later;
+save files differ; client connected on attempt 1; connect, positions (0.01 m), stability (59 samples / 60 s) PASS.
+Whole run 20:07:45 - 20:11:33. So Enter is accepted by both key-wait steps, and SetForegroundWindow worked for both
+windows on the owner's Windows.
