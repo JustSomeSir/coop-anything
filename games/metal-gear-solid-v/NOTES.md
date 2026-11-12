@@ -479,3 +479,27 @@ has no commit about vehicles or the horse beyond logging. The hook has no horse-
 Plan: measure first. `qa/experiment.py horse_probe` brings up the usual session, lists the buddy/GameObject Lua API
 on both sides, calls D-Horse on the host, then on the client (TppBuddy2BlockController.CallBuddy: a guess from other
 mods), and samples TppHorse2 positions and both player positions on both sides. Not yet run on the game.
+
+### 2026-11-12 20:28: D-Horse probe, first data (mission 10020)
+
+Observed (runs/20261112-202839-horse_probe/experiment.jsonl):
+- `GameObject.GetGameObjectIdByIndex("TppHorse2", i)` returns 6656 + i for i = 0..3 on both sides (no check that the
+  instance exists). `GameObject.SendCommand(id, {id="GetPosition"})` returns nil for all of them: no horse position
+  from Lua this way.
+- `vars.buddyType` is 1 (= BuddyType.HORSE) on both sides; DidObtainBuddyType and CanSortieBuddyType true;
+  `TppBuddy2BlockController.CallBuddy(BuddyType.HORSE, Vector3, 0)` returned true on both.
+- About 20 s after the host's call the host's `vars.playerVehicleGameObjectId` became 6656 while its position did
+  not change. Player 1 (client) was moving the whole time with vehicleId 65535 (mission 10020's scripted intro ride);
+  in the last sample player 1 was at the host's position (1449.3, 339.2, 1467.4) with vehicleId 6656 on the client
+  too, in both views.
+- API names recorded: TppBuddyService, TppBuddy2BlockController (CallBuddy, SetCallPosition, RequestMoveToPosition,
+  DeleteBuddy, ...), Player, TppNetworkUtil, Dynamite. GameObject/Vehicle/BuddyType keep their members behind hashed keys.
+Derived: both players end up on the same object id 6656, i.e. one TppHorse2 instance is shared; this matches the
+owner's "the client's horse appeared under the host".
+Guess, not shown yet: the horse's position itself is not synced, only "player N rides object 6656".
+Problem: mission 10020 has a scripted intro ride and tutorial, so the data is polluted (owner pointed this out).
+Next: use a mission without it (10036, in Dynamite's co-op list; DEFAULT_DROP_ROUTE has a helicopter route for it;
+first try a ground start without a route), and read the horse position natively (needs reverse engineering:
+the hook only knows the soldier position table).
+Mod data note: moddata/coop_essentials ships fox2 XML (two_player2_instances.fox2.xml) compiled by the installer with
+unknown321/datfpk, so a fox2 that declares two TppHorse2 instances is a possible route to "one horse per player".
