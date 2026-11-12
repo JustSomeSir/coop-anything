@@ -414,3 +414,13 @@ Observed (runner output from the owner): twin "client does not call CreateClient
 connect failed as it must. Final table: connect ok, positions ok, positions twin ok, stability ok, connect twin ok,
 RESULT: PASS. Write-up QA section updated with the summary and its limits; directory qa level left at `none` until
 the owner decides (the run used a fork branch and a loopback transport, not the listed project's release).
+
+### 2026-11-12: automating the title CONTINUE (started)
+
+Known from the mod's Lua (TppMission.lua, TppMain.lua): `gvars.ini_isTitleMode` is true while the title runs over the
+loaded mission. The title script itself (`title_sequence.fpk`) is not in the mod's sources and was not found in
+TinManTex/mgsv-deminified-lua (data1 only). `mvars.seq_sequenceTable[<current>]._messageExecTable` holds the current
+sequence's message handlers (TppSequence.lua), and TppMain.OnMessage looks up `OnlineChallengeTask.OnMessage` on every
+message, so a wrapper there can record messages. Plan: `qa/probe_title.py` records sequence names, title flags, the
+handlers and the messages while the owner goes through the title once; then make the runner press CONTINUE itself.
+Not run on the game yet. The bridge is pumped on the title again (the old hang was the unbound lua_remove).
