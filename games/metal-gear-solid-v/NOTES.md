@@ -424,3 +424,20 @@ sequence's message handlers (TppSequence.lua), and TppMain.OnMessage looks up `O
 message, so a wrapper there can record messages. Plan: `qa/probe_title.py` records sequence names, title flags, the
 handlers and the messages while the owner goes through the title once; then make the runner press CONTINUE itself.
 Not run on the game yet. The bridge is pumped on the title again (the old hang was the unbound lua_remove).
+
+### 2026-11-12 19:40: title probe results (1.0.15.4, host copy, owner pressed the keys)
+
+Observed (runs/20261112-194022-probe/timeline.log):
+- mission 1: Seq_Mission_Prepare -> Seq_Demo_SetSavedLanguage -> Seq_Demo_CreateOrLoadSaveData ->
+  Seq_Demo_LogInKonamiServer (5 s) -> Seq_Demo_ShowDlcAnnouncePopup (1 s) -> Seq_Demo_Init; `gvars.ini_isTitleMode` false.
+- mission 40010 (heliSpace true from here on): Seq_Mission_Prepare (10 s) -> Seq_Demo_StartHasTitleMission (8 s) ->
+  Seq_Game_TitleMenu (5 s) -> Seq_Game_MainGame. `gvars.ini_isTitleMode` is true until MainGame, where it turns false
+  together with `mvars.mis_missionStateIsNotInGame`.
+- Seq_Game_TitleMenu has OnSelectContinue / OnSelectGameStart / OnSelectMGO / OnSelectRestartHeli; its message table
+  maps UI message StrCode32("Continue") = 1439467306 to OnSelectContinue (same function address).
+- The OnlineChallengeTask.OnMessage wrapper saw nothing: OnlineChallengeTask was not a table with OnMessage ("none").
+Unknown: which steps needed a key press from the owner (popups in mission 1, press-start in 40010).
+
+Change: runner default `title_wait: auto`: waits for Seq_Game_TitleMenu, calls CoopQA.pressContinue() (the menu's own
+OnSelectContinue), ready = heliSpace and Seq_Game_MainGame and not title mode and not notInGame. Simulation covers a
+title that ignores CONTINUE (must fail). Not yet run on the game.
